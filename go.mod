@@ -16,6 +16,7 @@ require (
 	github.com/couchbase/sg-bucket v0.0.0-20230814163311-4a700c849d80
 	github.com/couchbaselabs/go-fleecedelta v0.0.0-20200408160354-2ed3f45fde8f
 	github.com/couchbaselabs/rosmar v0.0.0-20230807222202-f051d1c9b9e8
+	github.com/davecgh/go-spew v1.1.1
 	github.com/elastic/gosigar v0.14.2
 	github.com/felixge/fgprof v0.9.2
 	github.com/google/uuid v1.3.0
@@ -48,7 +49,6 @@ require (
 	github.com/couchbase/blance v0.1.3 // indirect
 	github.com/couchbase/cbauth v0.1.10 // indirect
 	github.com/couchbase/tools-common v0.0.0-20220810163003-4c3c185822d4 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect

@@ -10,6 +10,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"log"
 	"os"
 	"sort"
@@ -184,11 +185,11 @@ func getMultiBranchTestRevtree1(unconflictedBranchNumRevs, winningBranchNumRevs 
 
 }
 
-func testUnmarshal(t *testing.T, jsonString string) RevTree {
-	gotmap := RevTree{}
-	assert.NoError(t, base.JSONUnmarshal([]byte(jsonString), &gotmap), "Couldn't parse RevTree from JSON")
-	assert.Equal(t, testmap, gotmap)
-	return gotmap
+func assertRevTreeUnmarshal(t *testing.T, jsonString string, expectedRevtree RevTree) bool {
+	var gotmap RevTree
+	require.NoError(t, base.JSONUnmarshal([]byte(jsonString), &gotmap))
+	t.Logf("Unmarshalled %s %v", jsonString, spew.Sprint(gotmap))
+	return assert.Equal(t, expectedRevtree, gotmap)
 }
 
 // Make sure that the getMultiBranchTestRevtree1() helper works as expected
@@ -221,8 +222,7 @@ func TestRevTreeUnmarshalOldFormat(t *testing.T) {
 	"bodies": ["{}", "", ""],
 	"channels": [null, ["ABC", "CBS"], ["ABC"]]
 }`
-	gotmap := testUnmarshal(t, testJSON)
-	fmt.Printf("Unmarshaled to %v\n", gotmap)
+	assertRevTreeUnmarshal(t, testJSON, testmap)
 }
 
 func TestRevTreeUnmarshal(t *testing.T) {
@@ -234,8 +234,7 @@ func TestRevTreeUnmarshal(t *testing.T) {
 	"bodymap": {"0":"{}"},
 	"channels": [null, ["ABC", "CBS"], ["ABC"]]
 }`
-	gotmap := testUnmarshal(t, testJSON)
-	fmt.Printf("Unmarshaled to %v\n", gotmap)
+	assertRevTreeUnmarshal(t, testJSON, testmap)
 }
 
 func TestRevTreeUnmarshalRevParentCountMismatch(t *testing.T) {
@@ -249,11 +248,19 @@ func TestRevTreeUnmarshalRevParentCountMismatch(t *testing.T) {
 	assert.Errorf(t, err, "revtreelist data is invalid, revs/parents/channels counts are inconsistent")
 }
 
-func TestRevTreeMarshal(t *testing.T) {
-	bytes, err := base.JSONMarshal(testmap)
-	assert.NoError(t, err, "Couldn't write RevTree to JSON")
-	fmt.Printf("Marshaled RevTree as %s\n", string(bytes))
-	testUnmarshal(t, string(bytes))
+func TestRevTreeMarshalUnmarshalRoundtrip(t *testing.T) {
+	tests := map[string]RevTree{
+		"testmap":    testmap,
+		"branchymap": branchymap,
+		"multiroot":  multiroot,
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			bytes, err := base.JSONMarshal(test)
+			require.NoError(t, err)
+			assertRevTreeUnmarshal(t, string(bytes), test)
+		})
+	}
 }
 
 func TestRevTreeAccess(t *testing.T) {
