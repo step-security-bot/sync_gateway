@@ -301,9 +301,16 @@ func (c *Collection) SubdocInsertXattr(k string, xattrKey string, exp uint32, ca
 		docFlags = gocb.SubdocDocFlagMkDoc
 	}
 
+	bucketUUID, err := c.Bucket.UUID()
+	if err != nil {
+		return 0, err
+	}
+
 	mutateOps := []gocb.MutateInSpec{
 		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
 	}
 	options := &gocb.MutateInOptions{
@@ -325,9 +332,16 @@ func (c *Collection) SubdocInsertBodyAndXattr(k string, xattrKey string, exp uin
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
+	bucketUUID, err := c.Bucket.UUID()
+	if err != nil {
+		return 0, err
+	}
+
 	mutateOps := []gocb.MutateInSpec{
 		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
 		gocb.ReplaceSpec("", bytesToRawMessage(v), nil),
 	}
@@ -396,9 +410,16 @@ func (c *Collection) SubdocUpdateXattr(k string, xattrKey string, exp uint32, ca
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
+	bucketUUID, err := c.Bucket.UUID()
+	if err != nil {
+		return 0, err
+	}
+
 	mutateOps := []gocb.MutateInSpec{
 		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
 	}
 	options := &gocb.MutateInOptions{
@@ -421,9 +442,16 @@ func (c *Collection) SubdocUpdateBodyAndXattr(k string, xattrKey string, exp uin
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
+	bucketUUID, err := c.Bucket.UUID()
+	if err != nil {
+		return 0, err
+	}
+
 	mutateOps := []gocb.MutateInSpec{
 		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
 		gocb.ReplaceSpec("", bytesToRawMessage(v), nil),
 	}
@@ -446,9 +474,16 @@ func (c *Collection) SubdocUpdateXattrDeleteBody(k, xattrKey string, exp uint32,
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
+	bucketUUID, err := c.Bucket.UUID()
+	if err != nil {
+		return 0, err
+	}
+
 	mutateOps := []gocb.MutateInSpec{
 		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
 		gocb.RemoveSpec("", nil),
 	}
@@ -530,8 +565,15 @@ func (c *Collection) SubdocDeleteBody(k string, xattrKey string, exp uint32, cas
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
+	bucketUUID, err := c.Bucket.UUID()
+	if err != nil {
+		return 0, err
+	}
+
 	mutateOps := []gocb.MutateInSpec{
 		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
 		gocb.RemoveSpec("", nil),
 	}

@@ -20,6 +20,10 @@ import (
 const (
 	xattrMacroCas         = "cas"
 	xattrMacroValueCrc32c = "value_crc32c"
+	xattrMacroVersion     = "vrs"
+	xattrMacroSourceID    = "src"
+
+	versionVectorMacro = "._vv."
 )
 
 // SubdocXattrStore interface defines the set of operations Sync Gateway uses to manage and interact with xattrs
@@ -444,4 +448,12 @@ func xattrCasPath(xattrKey string) string {
 
 func xattrCrc32cPath(xattrKey string) string {
 	return xattrKey + "." + xattrMacroValueCrc32c
+}
+
+func xattrVersionPath(xattrKey string) string {
+	return xattrKey + versionVectorMacro + xattrMacroVersion
+}
+
+func xattrSourceIDPath(xattrKey string) string {
+	return xattrKey + versionVectorMacro + xattrMacroSourceID
 }
