@@ -2756,6 +2756,7 @@ func TestNullDocHandlingForMutable1xBody(t *testing.T) {
 
 // TestPutDocUpdateVersionVector:
 //   - Put a doc and assert that the versions and the source for the hlv is correctly updated
+//   - Write another update to the same doc and then assert that the version updates along with the sync data cas value
 func TestPutDocUpdateVersionVector(t *testing.T) {
 	rt := NewRestTester(t, nil)
 	defer rt.Close()
