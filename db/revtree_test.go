@@ -10,7 +10,6 @@ package db
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"log"
 	"os"
 	"sort"
@@ -19,6 +18,7 @@ import (
 	"time"
 
 	"github.com/couchbase/sync_gateway/base"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
