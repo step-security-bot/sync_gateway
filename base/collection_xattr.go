@@ -480,10 +480,10 @@ func (c *Collection) SubdocUpdateXattrDeleteBody(k, xattrKey string, exp uint32,
 	}
 
 	mutateOps := []gocb.MutateInSpec{
-		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
 		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
+		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
 		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
 		gocb.RemoveSpec("", nil),
 	}
