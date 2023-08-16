@@ -55,6 +55,20 @@ type TestBucket struct {
 	t          testing.TB
 }
 
+type testPersistedHybridLogicalVector struct {
+	CurrentVersionCAS string            `json:"cvCas,omitempty"`
+	SourceID          string            `json:"src,omitempty"`
+	Version           string            `json:"vrs,omitempty"`
+	MergeVersions     map[string]string `json:"mv,omitempty"`
+	PreviousVersions  map[string]string `json:"pv,omitempty"`
+}
+
+type TestSyncData struct {
+	Seq           int                              `json:"seq"`
+	Rev           string                           `json:"rev"`
+	VersionVector testPersistedHybridLogicalVector `json:"_vv"`
+}
+
 var _ Bucket = &TestBucket{}
 
 // DefaultDataStore is intentionally not implemented for TestBucket

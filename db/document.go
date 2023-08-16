@@ -82,7 +82,7 @@ type SyncData struct {
 	Attachments       AttachmentsMeta              `json:"attachments,omitempty"`
 	ChannelSet        []ChannelSetEntry            `json:"channel_set"`
 	ChannelSetHistory []ChannelSetEntry            `json:"channel_set_history"`
-	HLV               PersistedHybridLogicalVector `json:"_vv,omitempty"`
+	HLV               PersistedHybridLogicalVector `json:"_vv"`
 
 	// Only used for performance metrics:
 	TimeSaved time.Time `json:"time_saved,omitempty"` // Timestamp of save.

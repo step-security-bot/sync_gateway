@@ -1159,10 +1159,17 @@ func TestXattrDeleteDocumentAndUpdateXattr(t *testing.T) {
 	xattrName := SyncXattrName
 	val := make(map[string]interface{})
 	val["body_field"] = "1234"
-
+	/*(
 	xattrVal := make(map[string]interface{})
 	xattrVal["seq"] = 123
 	xattrVal["rev"] = "1-1234"
+	xattrVal["_vv"] = make(map[string]interface{})
+
+	*/
+	xattrVal := TestSyncData{
+		Rev: "1-1234",
+		Seq: 123,
+	}
 
 	key := t.Name()
 	_, _, err := dataStore.GetRaw(key)
@@ -1217,9 +1224,10 @@ func TestXattrTombstoneDocAndUpdateXattr(t *testing.T) {
 	val["type"] = key1
 
 	xattrName := SyncXattrName
-	xattrVal := make(map[string]interface{})
-	xattrVal["seq"] = 123
-	xattrVal["rev"] = "1-1234"
+	xattrVal := TestSyncData{
+		Rev: "1-1234",
+		Seq: 123,
+	}
 
 	var err error
 
@@ -1240,9 +1248,8 @@ func TestXattrTombstoneDocAndUpdateXattr(t *testing.T) {
 	val = make(map[string]interface{})
 	val["type"] = key3
 
-	xattrVal = make(map[string]interface{})
-	xattrVal["seq"] = 456
-	xattrVal["rev"] = "1-1234"
+	xattrVal.Seq = 456
+	xattrVal.Rev = "1-1234"
 
 	// Create w/ XATTR
 	cas3int := uint64(0)
@@ -1260,9 +1267,10 @@ func TestXattrTombstoneDocAndUpdateXattr(t *testing.T) {
 	updatedVal := make(map[string]interface{})
 	updatedVal["type"] = "updated"
 
-	updatedXattrVal := make(map[string]interface{})
-	updatedXattrVal["seq"] = 123
-	updatedXattrVal["rev"] = "2-1234"
+	updatedXattrVal := TestSyncData{
+		Seq: 123,
+		Rev: "2-1234",
+	}
 
 	// Attempt to delete DocExistsXattrExists, DocExistsNoXattr, and XattrExistsNoDoc
 	// No errors should be returned when deleting these.
@@ -2137,18 +2145,20 @@ func TestUpdateXattrWithDeleteBodyAndIsDelete(t *testing.T) {
 	val["type"] = key
 
 	xattrKey := SyncXattrName
-	xattrVal := make(map[string]interface{})
-	xattrVal["seq"] = 123
-	xattrVal["rev"] = "1-EmDC"
+	xattrVal := TestSyncData{
+		Seq: 123,
+		Rev: "1-EmDC",
+	}
 
 	cas := uint64(0)
 	// CAS-safe write of the document and it's associated named extended attributes
 	cas, err := dataStore.WriteCasWithXattr(key, xattrKey, 0, cas, nil, val, xattrVal)
 	require.NoError(t, err, "Error doing WriteCasWithXattr")
 
-	updatedXattrVal := make(map[string]interface{})
-	updatedXattrVal["seq"] = 123
-	updatedXattrVal["rev"] = "2-EmDC"
+	updatedXattrVal := TestSyncData{
+		Seq: 123,
+		Rev: "2-EmDC",
+	}
 
 	// Attempt to delete the document body (deleteBody = true); isDelete is true to mark this doc as a tombstone.
 	_, errDelete := UpdateTombstoneXattr(subdocXattrStore, key, xattrKey, 0, cas, &updatedXattrVal, true)
