@@ -1159,13 +1159,6 @@ func TestXattrDeleteDocumentAndUpdateXattr(t *testing.T) {
 	xattrName := SyncXattrName
 	val := make(map[string]interface{})
 	val["body_field"] = "1234"
-	/*(
-	xattrVal := make(map[string]interface{})
-	xattrVal["seq"] = 123
-	xattrVal["rev"] = "1-1234"
-	xattrVal["_vv"] = make(map[string]interface{})
-
-	*/
 	xattrVal := TestSyncData{
 		Rev: "1-1234",
 		Seq: 123,
