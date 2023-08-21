@@ -2519,6 +2519,7 @@ func TestResyncUpdateAllDocChannels(t *testing.T) {
 
 	db, ctx := SetupTestDBWithOptions(t, DatabaseContextOptions{QueryPaginationLimit: 5000})
 	collection := GetSingleDatabaseCollectionWithUser(t, db)
+	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
 
 	_, err := collection.UpdateSyncFun(ctx, syncFn)
 	require.NoError(t, err)
@@ -2540,7 +2541,7 @@ func TestResyncUpdateAllDocChannels(t *testing.T) {
 		return state == DBOffline
 	})
 
-	_, err = collection.UpdateAllDocChannels(ctx, false, func(docsProcessed, docsChanged *int) {}, base.NewSafeTerminator())
+	_, err = collection.UpdateAllDocChannels(ctx, false, func(docsProcessed, docsChanged *int) {}, opts, base.NewSafeTerminator())
 	assert.NoError(t, err)
 
 	syncFnCount := int(db.DbStats.Database().SyncFunctionCount.Value())
@@ -2854,6 +2855,7 @@ func Test_resyncDocument(t *testing.T) {
 		{useXattr: true},
 		{useXattr: false},
 	}
+	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
 
 	for _, testCase := range testCases {
 		t.Run(fmt.Sprintf("Test_resyncDocument with useXattr: %t", testCase.useXattr), func(t *testing.T) {
@@ -2891,7 +2893,7 @@ func Test_resyncDocument(t *testing.T) {
 			_, err = collection.UpdateSyncFun(ctx, syncFn)
 			require.NoError(t, err)
 
-			_, _, err = collection.resyncDocument(ctx, docID, realDocID(docID), false, []uint64{10})
+			_, _, err = collection.resyncDocument(ctx, docID, realDocID(docID), false, []uint64{10}, opts)
 			require.NoError(t, err)
 			err = collection.WaitForPendingChanges(ctx)
 			require.NoError(t, err)

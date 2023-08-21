@@ -1551,7 +1551,7 @@ func (db *DatabaseContext) GetMetadataPurgeInterval(ctx context.Context) time.Du
 // To be used when the JavaScript sync function changes.
 type updateAllDocChannelsCallbackFunc func(docsProcessed, docsChanged *int)
 
-func (db *DatabaseCollectionWithUser) UpdateAllDocChannels(ctx context.Context, regenerateSequences bool, callback updateAllDocChannelsCallbackFunc, terminator *base.SafeTerminator) (int, error) {
+func (db *DatabaseCollectionWithUser) UpdateAllDocChannels(ctx context.Context, regenerateSequences bool, callback updateAllDocChannelsCallbackFunc, opts *sgbucket.MutateInOptions, terminator *base.SafeTerminator) (int, error) {
 	base.InfofCtx(ctx, base.KeyAll, "Recomputing document channels...")
 	base.InfofCtx(ctx, base.KeyAll, "Re-running sync function on all documents...")
 
@@ -1614,7 +1614,7 @@ func (db *DatabaseCollectionWithUser) UpdateAllDocChannels(ctx context.Context, 
 			key := realDocID(docid)
 			queryRowCount++
 			docsProcessed++
-			_, unusedSequences, err = db.resyncDocument(ctx, docid, key, regenerateSequences, unusedSequences)
+			_, unusedSequences, err = db.resyncDocument(ctx, docid, key, regenerateSequences, unusedSequences, opts)
 			if err == nil {
 				docsChanged++
 			} else if err != base.ErrUpdateCancel {
@@ -1782,7 +1782,7 @@ func (db *DatabaseCollectionWithUser) getResyncedDocument(ctx context.Context, d
 	return doc, shouldUpdate, updatedExpiry, doc.Sequence, updatedUnusedSequences, nil
 }
 
-func (db *DatabaseCollectionWithUser) resyncDocument(ctx context.Context, docid, key string, regenerateSequences bool, unusedSequences []uint64) (updatedHighSeq uint64, updatedUnusedSequences []uint64, err error) {
+func (db *DatabaseCollectionWithUser) resyncDocument(ctx context.Context, docid, key string, regenerateSequences bool, unusedSequences []uint64, opts *sgbucket.MutateInOptions) (updatedHighSeq uint64, updatedUnusedSequences []uint64, err error) {
 	startTime := time.Now()
 	var updatedDoc *Document
 	var shouldUpdate bool
@@ -1827,7 +1827,7 @@ func (db *DatabaseCollectionWithUser) resyncDocument(ctx context.Context, docid,
 				return nil, nil, deleteDoc, nil, base.ErrUpdateCancel
 			}
 		}
-		_, err = db.dataStore.WriteUpdateWithXattr(key, base.SyncXattrName, db.userXattrKey(), 0, nil, nil, writeUpdateFunc)
+		_, err = db.dataStore.WriteUpdateWithXattr(key, base.SyncXattrName, db.userXattrKey(), 0, opts, nil, writeUpdateFunc)
 	} else {
 		_, err = db.dataStore.Update(key, 0, func(currentValue []byte) ([]byte, *uint32, bool, error) {
 			// Be careful: this block can be invoked multiple times if there are races!

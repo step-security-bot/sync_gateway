@@ -1898,6 +1898,7 @@ func (db *DatabaseCollectionWithUser) updateAndReturnDoc(ctx context.Context, do
 
 	if db.UseXattrs() || upgradeInProgress {
 		var casOut uint64
+		opts = base.InitializeMutateInOptions(opts, base.SyncXattrName)
 		// Update the document, storing metadata in extended attribute
 		casOut, err = db.dataStore.WriteUpdateWithXattr(key, base.SyncXattrName, db.userXattrKey(), expiry, opts, existingDoc, func(currentValue []byte, currentXattr []byte, currentUserXattr []byte, cas uint64) (raw []byte, rawXattr []byte, deleteDoc bool, syncFuncExpiry *uint32, err error) {
 			// Be careful: this block can be invoked multiple times if there are races!

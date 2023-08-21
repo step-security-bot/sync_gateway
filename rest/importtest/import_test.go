@@ -629,6 +629,8 @@ func TestXattrImportMultipleActorOnDemandGet(t *testing.T) {
 	defer rt.Close()
 	dataStore := rt.GetSingleDataStore()
 
+	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
+
 	base.SetUpTestLogging(t, base.LevelDebug, base.KeyImport, base.KeyCRUD)
 
 	// 1. Create doc via the SDK
@@ -656,7 +658,7 @@ func TestXattrImportMultipleActorOnDemandGet(t *testing.T) {
 	xattrVal["actor"] = "not mobile"
 	subdocXattrStore, ok := dataStore.(base.SubdocXattrStore)
 	assert.True(t, ok, "Unable to cast bucket to gocb bucket")
-	_, mutateErr := subdocXattrStore.SubdocUpdateXattr(mobileKey, "_nonmobile", uint32(0), cas, xattrVal)
+	_, mutateErr := subdocXattrStore.SubdocUpdateXattr(mobileKey, "_nonmobile", uint32(0), cas, xattrVal, opts)
 
 	assert.NoError(t, mutateErr, "Error updating non-mobile xattr for multi-actor document")
 
@@ -684,6 +686,7 @@ func TestXattrImportMultipleActorOnDemandPut(t *testing.T) {
 	rt := rest.NewRestTester(t, &rtConfig)
 	defer rt.Close()
 	dataStore := rt.GetSingleDataStore()
+	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
 
 	base.SetUpTestLogging(t, base.LevelDebug, base.KeyImport, base.KeyCRUD)
 
@@ -712,7 +715,7 @@ func TestXattrImportMultipleActorOnDemandPut(t *testing.T) {
 	xattrVal["actor"] = "not mobile"
 	subdocXattrStore, ok := dataStore.(base.SubdocXattrStore)
 	assert.True(t, ok, "Unable to cast bucket to gocb bucket")
-	_, mutateErr := subdocXattrStore.SubdocUpdateXattr(mobileKey, "_nonmobile", uint32(0), cas, xattrVal)
+	_, mutateErr := subdocXattrStore.SubdocUpdateXattr(mobileKey, "_nonmobile", uint32(0), cas, xattrVal, opts)
 	assert.NoError(t, mutateErr, "Error updating non-mobile xattr for multi-actor document")
 
 	// Attempt to update the document again via Sync Gateway.  Should not trigger import, PUT should be successful,
@@ -743,6 +746,7 @@ func TestXattrImportMultipleActorOnDemandFeed(t *testing.T) {
 	rt := rest.NewRestTester(t, &rtConfig)
 	defer rt.Close()
 	dataStore := rt.GetSingleDataStore()
+	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
 
 	base.SetUpTestLogging(t, base.LevelDebug, base.KeyImport, base.KeyCRUD)
 
@@ -774,7 +778,7 @@ func TestXattrImportMultipleActorOnDemandFeed(t *testing.T) {
 	xattrVal["actor"] = "not mobile"
 	subdocXattrStore, ok := dataStore.(base.SubdocXattrStore)
 	assert.True(t, ok, "Unable to cast bucket to gocb bucket")
-	_, mutateErr := subdocXattrStore.SubdocUpdateXattr(mobileKey, "_nonmobile", uint32(0), cas, xattrVal)
+	_, mutateErr := subdocXattrStore.SubdocUpdateXattr(mobileKey, "_nonmobile", uint32(0), cas, xattrVal, opts)
 	assert.NoError(t, mutateErr, "Error updating non-mobile xattr for multi-actor document")
 
 	// Wait until crc match count changes
@@ -2257,6 +2261,7 @@ func TestUnexpectedBodyOnTombstone(t *testing.T) {
 	rt := rest.NewRestTester(t, &rtConfig)
 	defer rt.Close()
 	dataStore := rt.GetSingleDataStore()
+	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
 
 	base.SetUpTestLogging(t, base.LevelDebug, base.KeyImport, base.KeyCRUD)
 
@@ -2290,7 +2295,7 @@ func TestUnexpectedBodyOnTombstone(t *testing.T) {
 	xattrVal["actor"] = "not mobile"
 	subdocXattrStore, ok := dataStore.(base.SubdocXattrStore)
 	assert.True(t, ok, "Unable to cast bucket to gocb bucket")
-	_, mutateErr := subdocXattrStore.SubdocUpdateXattr(mobileKey, "_nonmobile", uint32(0), cas, xattrVal)
+	_, mutateErr := subdocXattrStore.SubdocUpdateXattr(mobileKey, "_nonmobile", uint32(0), cas, xattrVal, opts)
 	assert.NoError(t, mutateErr, "Error updating non-mobile xattr for multi-actor document")
 
 	// Attempt to get the document again via Sync Gateway.  Should not trigger import.

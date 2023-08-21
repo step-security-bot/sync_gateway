@@ -207,6 +207,8 @@ func TestImportWithCasFailureUpdate(t *testing.T) {
 	var runOnce bool
 	var ctx context.Context
 
+	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
+
 	type testcase struct {
 		callback func(key string)
 		docname  string
@@ -289,7 +291,7 @@ func TestImportWithCasFailureUpdate(t *testing.T) {
 
 			collection := GetSingleDatabaseCollectionWithUser(t, db)
 			cas, _ := collection.dataStore.GetWithXattr(key, base.SyncXattrName, "", &body, &xattr, nil)
-			_, err := collection.dataStore.WriteCasWithXattr(key, base.SyncXattrName, 0, cas, nil, []byte(valStr), []byte(xattrStr))
+			_, err := collection.dataStore.WriteCasWithXattr(key, base.SyncXattrName, 0, cas, opts, []byte(valStr), []byte(xattrStr))
 			assert.NoError(t, err)
 		}
 	}

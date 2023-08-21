@@ -91,7 +91,7 @@ func (c *Collection) DeleteXattrs(k string, xattrKeys ...string) (err error) {
 }
 
 func (c *Collection) UpdateXattr(k string, xattrKey string, exp uint32, cas uint64, xv interface{}, deleteBody bool, isDelete bool) (casOut uint64, err error) {
-	return UpdateTombstoneXattr(c, k, xattrKey, exp, cas, xv, deleteBody)
+	return UpdateTombstoneXattr(c, k, xattrKey, exp, cas, xv, deleteBody, nil)
 }
 
 // SubdocGetXattr retrieves the named xattr
@@ -288,7 +288,7 @@ func (c *Collection) SubdocGetBodyAndXattr(k string, xattrKey string, userXattrK
 
 // SubdocInsertXattr inserts a new server tombstone with an associated mobile xattr.  Writes cas and crc32c to the xattr using
 // macro expansion.
-func (c *Collection) SubdocInsertXattr(k string, xattrKey string, exp uint32, cas uint64, xv interface{}) (casOut uint64, err error) {
+func (c *Collection) SubdocInsertXattr(k string, xattrKey string, exp uint32, cas uint64, xv interface{}, opts *sgbucket.MutateInOptions) (casOut uint64, err error) {
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
@@ -301,18 +301,12 @@ func (c *Collection) SubdocInsertXattr(k string, xattrKey string, exp uint32, ca
 		docFlags = gocb.SubdocDocFlagMkDoc
 	}
 
-	bucketUUID, err := c.Bucket.UUID()
+	// convert the passed down sg-bucket mutate in spec to gocb format
+	mutateOps, err := c.convertSGBucketSpecToGocbSpec(xv, xattrKey, opts)
 	if err != nil {
 		return 0, err
 	}
 
-	mutateOps := []gocb.MutateInSpec{
-		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
-	}
 	options := &gocb.MutateInOptions{
 		StoreSemantic: gocb.StoreSemanticsReplace, // set replace here, as we're explicitly setting SubdocDocFlagMkDoc above if tombstone creation is not supported
 		Expiry:        CbsExpiryToDuration(exp),
@@ -328,23 +322,18 @@ func (c *Collection) SubdocInsertXattr(k string, xattrKey string, exp uint32, ca
 
 // SubdocInsertXattr inserts a document and associated mobile xattr in a single mutateIn operation.  Writes cas and crc32c to the xattr using
 // macro expansion.
-func (c *Collection) SubdocInsertBodyAndXattr(k string, xattrKey string, exp uint32, v interface{}, xv interface{}) (casOut uint64, err error) {
+func (c *Collection) SubdocInsertBodyAndXattr(k string, xattrKey string, exp uint32, v interface{}, xv interface{}, opts *sgbucket.MutateInOptions) (casOut uint64, err error) {
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
-	bucketUUID, err := c.Bucket.UUID()
+	// convert the passed down sg-bucket mutate in spec to gocb format
+	mutateOps, err := c.convertSGBucketSpecToGocbSpec(xv, xattrKey, opts)
 	if err != nil {
 		return 0, err
 	}
 
-	mutateOps := []gocb.MutateInSpec{
-		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
-		gocb.ReplaceSpec("", bytesToRawMessage(v), nil),
-	}
+	// add replace spec needed for this operation to the mutate in spec
+	mutateOps = append(mutateOps, gocb.ReplaceSpec("", bytesToRawMessage(v), nil))
 	options := &gocb.MutateInOptions{
 		Expiry:        CbsExpiryToDuration(exp),
 		StoreSemantic: gocb.StoreSemanticsInsert,
@@ -406,22 +395,16 @@ func (c *Collection) SubdocSetXattr(k string, xattrKey string, xv interface{}) (
 
 // SubdocUpdateXattr updates the xattr on an existing document. Writes cas and crc32c to the xattr using
 // macro expansion.
-func (c *Collection) SubdocUpdateXattr(k string, xattrKey string, exp uint32, cas uint64, xv interface{}) (casOut uint64, err error) {
+func (c *Collection) SubdocUpdateXattr(k string, xattrKey string, exp uint32, cas uint64, xv interface{}, opts *sgbucket.MutateInOptions) (casOut uint64, err error) {
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
-	bucketUUID, err := c.Bucket.UUID()
+	// convert the passed down sg-bucket mutate in spec to gocb format
+	mutateOps, err := c.convertSGBucketSpecToGocbSpec(xv, xattrKey, opts)
 	if err != nil {
 		return 0, err
 	}
 
-	mutateOps := []gocb.MutateInSpec{
-		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
-	}
 	options := &gocb.MutateInOptions{
 		Expiry:        CbsExpiryToDuration(exp),
 		StoreSemantic: gocb.StoreSemanticsUpsert,
@@ -442,19 +425,14 @@ func (c *Collection) SubdocUpdateBodyAndXattr(k string, xattrKey string, exp uin
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
-	bucketUUID, err := c.Bucket.UUID()
+	// convert the passed down sg-bucket mutate in spec to gocb format
+	mutateOps, err := c.convertSGBucketSpecToGocbSpec(xv, xattrKey, opts)
 	if err != nil {
 		return 0, err
 	}
 
-	mutateOps := []gocb.MutateInSpec{
-		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
-		gocb.ReplaceSpec("", bytesToRawMessage(v), nil),
-	}
+	// add replace spec needed for this operation to the mutate in spec
+	mutateOps = append(mutateOps, gocb.ReplaceSpec("", bytesToRawMessage(v), nil))
 	options := &gocb.MutateInOptions{
 		Expiry:        CbsExpiryToDuration(exp),
 		StoreSemantic: gocb.StoreSemanticsUpsert,
@@ -470,23 +448,18 @@ func (c *Collection) SubdocUpdateBodyAndXattr(k string, xattrKey string, exp uin
 
 // SubdocUpdateBodyAndXattr deletes the document body and updates the xattr of an existing document. Writes cas and crc32c to the xattr using
 // macro expansion.
-func (c *Collection) SubdocUpdateXattrDeleteBody(k, xattrKey string, exp uint32, cas uint64, xv interface{}) (casOut uint64, err error) {
+func (c *Collection) SubdocUpdateXattrDeleteBody(k, xattrKey string, exp uint32, cas uint64, xv interface{}, opts *sgbucket.MutateInOptions) (casOut uint64, err error) {
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
-	bucketUUID, err := c.Bucket.UUID()
+	// convert the passed down sg-bucket mutate in spec to gocb format
+	mutateOps, err := c.convertSGBucketSpecToGocbSpec(xv, xattrKey, opts)
 	if err != nil {
 		return 0, err
 	}
 
-	mutateOps := []gocb.MutateInSpec{
-		gocb.UpsertSpec(xattrKey, bytesToRawMessage(xv), UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
-		gocb.RemoveSpec("", nil),
-	}
+	// add replace spec needed for this operation to the mutate in spec
+	mutateOps = append(mutateOps, gocb.RemoveSpec("", nil))
 	options := &gocb.MutateInOptions{
 		StoreSemantic: gocb.StoreSemanticsReplace,
 		Expiry:        CbsExpiryToDuration(exp),
@@ -561,22 +534,18 @@ func (c *Collection) SubdocDeleteBodyAndXattr(k string, xattrKey string) (err er
 }
 
 // SubdocDeleteBody deletes the document body of an existing document, and updates cas and crc32c in the associated xattr.
-func (c *Collection) SubdocDeleteBody(k string, xattrKey string, exp uint32, cas uint64) (casOut uint64, err error) {
+func (c *Collection) SubdocDeleteBody(k string, xattrKey string, exp uint32, cas uint64, opts *sgbucket.MutateInOptions) (casOut uint64, err error) {
 	c.Bucket.waitForAvailKvOp()
 	defer c.Bucket.releaseKvOp()
 
-	bucketUUID, err := c.Bucket.UUID()
+	// convert the passed down sg-bucket mutate in spec to gocb format
+	mutateOps, err := c.convertSGBucketSpecToGocbSpec(nil, xattrKey, opts)
 	if err != nil {
 		return 0, err
 	}
 
-	mutateOps := []gocb.MutateInSpec{
-		gocb.UpsertSpec(xattrCasPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrVersionPath(xattrKey), gocb.MutationMacroCAS, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrSourceIDPath(xattrKey), bucketUUID, UpsertSpecXattr),
-		gocb.UpsertSpec(xattrCrc32cPath(xattrKey), gocb.MutationMacroValueCRC32c, UpsertSpecXattr),
-		gocb.RemoveSpec("", nil),
-	}
+	// add replace spec needed for this operation to the mutate in spec
+	mutateOps = append(mutateOps, gocb.RemoveSpec("", nil))
 	options := &gocb.MutateInOptions{
 		StoreSemantic: gocb.StoreSemanticsReplace,
 		Expiry:        CbsExpiryToDuration(exp),
@@ -666,4 +635,44 @@ func (c *Collection) DeleteUserXattr(k string, xattrKey string) (uint64, error) 
 		return 0, mutateErr
 	}
 	return uint64(result.Cas()), nil
+}
+
+// convertSGBucketSpecToGocbSpec will take sg-bucket mutate in spec and convert it to a gocb mutate in spec to be passed to the SDK
+func (c *Collection) convertSGBucketSpecToGocbSpec(xv interface{}, xattrKey string, opts *sgbucket.MutateInOptions) ([]gocb.MutateInSpec, error) {
+	var spec []gocb.MutateInSpec
+	if opts == nil {
+		opts = InitializeMutateInOptions(opts, SyncXattrName)
+	}
+	if xv != nil {
+		spec = append(spec, gocb.UpsertSpec((xattrKey), bytesToRawMessage(xv), UpsertSpecXattr))
+	}
+
+	// grab bucket UUID for sourceID macro expansion
+	bucketUUID, err := c.Bucket.UUID()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range opts.Spec {
+		if v.Value == "src" {
+			spec = append(spec, gocb.UpsertSpec(v.Path, bucketUUID, UpsertSpecXattr))
+		} else {
+			// if value is no `src` then we are inserting a cas value
+			spec = append(spec, gocb.UpsertSpec(v.Path, v.Value, UpsertSpecXattr))
+		}
+	}
+	return spec, nil
+}
+
+// InitializeMutateInOptions initialises the mutate in option on the sg-bucket library to values that are needed for macro expansion
+func InitializeMutateInOptions(opts *sgbucket.MutateInOptions, xattrName string) *sgbucket.MutateInOptions {
+	if opts == nil {
+		opts = &sgbucket.MutateInOptions{}
+	}
+	opts.Spec = []sgbucket.MutateInSpec{
+		sgbucket.UpsertSpec(xattrCasPath(xattrName), gocb.MutationMacroCAS),
+		sgbucket.UpsertSpec(xattrVersionPath(xattrName), gocb.MutationMacroCAS),
+		sgbucket.UpsertSpec(xattrSourceIDPath(xattrName), "src"),
+		sgbucket.UpsertSpec(xattrCrc32cPath(xattrName), gocb.MutationMacroValueCRC32c),
+	}
+	return opts
 }
