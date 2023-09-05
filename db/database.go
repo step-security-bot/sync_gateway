@@ -1551,7 +1551,7 @@ func (db *DatabaseContext) GetMetadataPurgeInterval(ctx context.Context) time.Du
 // To be used when the JavaScript sync function changes.
 type updateAllDocChannelsCallbackFunc func(docsProcessed, docsChanged *int)
 
-func (db *DatabaseCollectionWithUser) UpdateAllDocChannels(ctx context.Context, regenerateSequences bool, callback updateAllDocChannelsCallbackFunc, opts *sgbucket.MutateInOptions, terminator *base.SafeTerminator) (int, error) {
+func (db *DatabaseCollectionWithUser) UpdateAllDocChannels(ctx context.Context, regenerateSequences bool, callback updateAllDocChannelsCallbackFunc, terminator *base.SafeTerminator) (int, error) {
 	base.InfofCtx(ctx, base.KeyAll, "Recomputing document channels...")
 	base.InfofCtx(ctx, base.KeyAll, "Re-running sync function on all documents...")
 
@@ -1614,7 +1614,7 @@ func (db *DatabaseCollectionWithUser) UpdateAllDocChannels(ctx context.Context, 
 			key := realDocID(docid)
 			queryRowCount++
 			docsProcessed++
-			_, unusedSequences, err = db.resyncDocument(ctx, docid, key, regenerateSequences, unusedSequences, opts)
+			_, unusedSequences, err = db.resyncDocument(ctx, docid, key, regenerateSequences, unusedSequences)
 			if err == nil {
 				docsChanged++
 			} else if err != base.ErrUpdateCancel {
@@ -1782,11 +1782,12 @@ func (db *DatabaseCollectionWithUser) getResyncedDocument(ctx context.Context, d
 	return doc, shouldUpdate, updatedExpiry, doc.Sequence, updatedUnusedSequences, nil
 }
 
-func (db *DatabaseCollectionWithUser) resyncDocument(ctx context.Context, docid, key string, regenerateSequences bool, unusedSequences []uint64, opts *sgbucket.MutateInOptions) (updatedHighSeq uint64, updatedUnusedSequences []uint64, err error) {
+func (db *DatabaseCollectionWithUser) resyncDocument(ctx context.Context, docid, key string, regenerateSequences bool, unusedSequences []uint64) (updatedHighSeq uint64, updatedUnusedSequences []uint64, err error) {
 	startTime := time.Now()
 	var updatedDoc *Document
 	var shouldUpdate bool
 	var updatedExpiry *uint32
+	var opts *sgbucket.MutateInOptions
 	defer func() {
 		functionTime := time.Since(startTime).Milliseconds()
 		var bytes int
@@ -1800,31 +1801,38 @@ func (db *DatabaseCollectionWithUser) resyncDocument(ctx context.Context, docid,
 	}()
 	if db.UseXattrs() {
 		writeUpdateFunc := func(currentValue []byte, currentXattr []byte, currentUserXattr []byte, cas uint64) (
-			raw []byte, rawXattr []byte, deleteDoc bool, expiry *uint32, err error) {
+			raw []byte, rawXattr []byte, deleteDoc bool, expiry *uint32, opts *sgbucket.MutateInOptions, err error) {
 			// There's no scenario where a doc should from non-deleted to deleted during UpdateAllDocChannels processing,
 			// so deleteDoc is always returned as false.
 			if currentValue == nil || len(currentValue) == 0 {
-				return nil, nil, deleteDoc, nil, base.ErrUpdateCancel
+				return nil, nil, deleteDoc, nil, nil, base.ErrUpdateCancel
 			}
 			doc, err := unmarshalDocumentWithXattr(docid, currentValue, currentXattr, currentUserXattr, cas, DocUnmarshalAll)
 			if err != nil {
-				return nil, nil, deleteDoc, nil, err
+				return nil, nil, deleteDoc, nil, nil, err
 			}
 			updatedDoc, shouldUpdate, updatedExpiry, updatedHighSeq, unusedSequences, err = db.getResyncedDocument(ctx, doc, regenerateSequences, unusedSequences)
 			if err != nil {
-				return nil, nil, deleteDoc, nil, err
+				return nil, nil, deleteDoc, nil, nil, err
 			}
 			if shouldUpdate {
 				base.InfofCtx(ctx, base.KeyAccess, "Saving updated channels and access grants of %q", base.UD(docid))
 				if updatedExpiry != nil {
 					updatedDoc.UpdateExpiry(*updatedExpiry)
 				}
+				doc, err = db.hlvLogicTemp(doc)
+				if err != nil {
+					return nil, nil, deleteDoc, nil, nil, err
+				}
+				extractedHLV := extractHLVFromDoc(doc)
+				//  WE NEED TO CONSTRUCT MUTATE IN OPTIONS HERE
+				opts = base.InitializeMutateInOptions(extractedHLV, opts, base.SyncXattrName)
 
 				doc.SetCrc32cUserXattrHash()
 				raw, rawXattr, err = updatedDoc.MarshalWithXattr()
-				return raw, rawXattr, deleteDoc, updatedExpiry, err
+				return raw, rawXattr, deleteDoc, updatedExpiry, opts, err
 			} else {
-				return nil, nil, deleteDoc, nil, base.ErrUpdateCancel
+				return nil, nil, deleteDoc, nil, nil, base.ErrUpdateCancel
 			}
 		}
 		_, err = db.dataStore.WriteUpdateWithXattr(key, base.SyncXattrName, db.userXattrKey(), 0, opts, nil, writeUpdateFunc)

@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/couchbase/gocb/v2"
 	"github.com/couchbase/gocbcore/v10"
@@ -641,38 +642,51 @@ func (c *Collection) DeleteUserXattr(k string, xattrKey string) (uint64, error) 
 func (c *Collection) convertSGBucketSpecToGocbSpec(xv interface{}, xattrKey string, opts *sgbucket.MutateInOptions) ([]gocb.MutateInSpec, error) {
 	var spec []gocb.MutateInSpec
 	if opts == nil {
-		opts = InitializeMutateInOptions(opts, SyncXattrName)
+		return nil, fmt.Errorf("not mutate in spec to work with")
 	}
 	if xv != nil {
 		spec = append(spec, gocb.UpsertSpec((xattrKey), bytesToRawMessage(xv), UpsertSpecXattr))
 	}
 
-	// grab bucket UUID for sourceID macro expansion
-	bucketUUID, err := c.Bucket.UUID()
-	if err != nil {
-		return nil, err
-	}
 	for _, v := range opts.Spec {
-		if v.Value == "src" {
-			spec = append(spec, gocb.UpsertSpec(v.Path, bucketUUID, UpsertSpecXattr))
-		} else {
-			// if value is no `src` then we are inserting a cas value
-			spec = append(spec, gocb.UpsertSpec(v.Path, v.Value, UpsertSpecXattr))
-		}
+		spec = append(spec, gocb.UpsertSpec(v.Path, v.Value, UpsertSpecXattr))
 	}
 	return spec, nil
 }
 
+// DocHLV is used to stores the extracted values of the HLV from the document struct to be passed into InitializeMutateInOptions
+// this get around issue with import cycles
+type DocHLV struct {
+	CvCAS            uint64
+	Version          uint64
+	SourceID         string
+	PreviousVersions map[string]uint64
+	MergeVersions    map[string]uint64
+}
+
 // InitializeMutateInOptions initialises the mutate in option on the sg-bucket library to values that are needed for macro expansion
-func InitializeMutateInOptions(opts *sgbucket.MutateInOptions, xattrName string) *sgbucket.MutateInOptions {
+func InitializeMutateInOptions(doc *DocHLV, opts *sgbucket.MutateInOptions, xattrName string) *sgbucket.MutateInOptions {
 	if opts == nil {
 		opts = &sgbucket.MutateInOptions{}
 	}
+	if doc == nil {
+		initDoc := DocHLV{}
+		doc = &initDoc
+		doc.SourceID = ""
+	}
 	opts.Spec = []sgbucket.MutateInSpec{
-		sgbucket.UpsertSpec(xattrCasPath(xattrName), gocb.MutationMacroCAS),
-		sgbucket.UpsertSpec(xattrVersionPath(xattrName), gocb.MutationMacroCAS),
-		sgbucket.UpsertSpec(xattrSourceIDPath(xattrName), "src"),
-		sgbucket.UpsertSpec(xattrCrc32cPath(xattrName), gocb.MutationMacroValueCRC32c),
+		sgbucket.UpsertSpec(XattrCasPath(xattrName), gocb.MutationMacroCAS),
+		sgbucket.UpsertSpec(XattrVersionPath(xattrName), gocb.MutationMacroCAS),
+		sgbucket.UpsertSpec(XattrSourceIDPath(xattrName), doc.SourceID),
+		sgbucket.UpsertSpec(XattrCrc32cPath(xattrName), gocb.MutationMacroValueCRC32c),
+	}
+
+	if len(doc.PreviousVersions) != 0 {
+		//convertMapToPersistedFormat()
+		opts.Spec = append(opts.Spec, sgbucket.UpsertSpec(XattrPreviousVersionPath(xattrName), doc.PreviousVersions))
+	}
+	if len(doc.MergeVersions) != 0 {
+		opts.Spec = append(opts.Spec, sgbucket.UpsertSpec(XattrMergeVersionPath(xattrName), doc.MergeVersions))
 	}
 	return opts
 }

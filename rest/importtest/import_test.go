@@ -629,7 +629,7 @@ func TestXattrImportMultipleActorOnDemandGet(t *testing.T) {
 	defer rt.Close()
 	dataStore := rt.GetSingleDataStore()
 
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
+	opts := base.InitializeMutateInOptions(nil, nil, "_nonmobile")
 
 	base.SetUpTestLogging(t, base.LevelDebug, base.KeyImport, base.KeyCRUD)
 
@@ -686,7 +686,7 @@ func TestXattrImportMultipleActorOnDemandPut(t *testing.T) {
 	rt := rest.NewRestTester(t, &rtConfig)
 	defer rt.Close()
 	dataStore := rt.GetSingleDataStore()
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
+	opts := base.InitializeMutateInOptions(nil, nil, "_nonmobile")
 
 	base.SetUpTestLogging(t, base.LevelDebug, base.KeyImport, base.KeyCRUD)
 
@@ -746,7 +746,7 @@ func TestXattrImportMultipleActorOnDemandFeed(t *testing.T) {
 	rt := rest.NewRestTester(t, &rtConfig)
 	defer rt.Close()
 	dataStore := rt.GetSingleDataStore()
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
+	opts := base.InitializeMutateInOptions(nil, nil, "_nonmobile")
 
 	base.SetUpTestLogging(t, base.LevelDebug, base.KeyImport, base.KeyCRUD)
 
@@ -2261,7 +2261,7 @@ func TestUnexpectedBodyOnTombstone(t *testing.T) {
 	rt := rest.NewRestTester(t, &rtConfig)
 	defer rt.Close()
 	dataStore := rt.GetSingleDataStore()
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
+	opts := base.InitializeMutateInOptions(nil, nil, "_nonmobile")
 
 	base.SetUpTestLogging(t, base.LevelDebug, base.KeyImport, base.KeyCRUD)
 

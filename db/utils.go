@@ -79,3 +79,21 @@ func CalculateComputeStat(bytes, functionTime int64) int64 {
 	stat := functionTime * bytes
 	return stat
 }
+
+// extractHLVFromDoc extracts the version vector from the doc struct, needed to get around import cycle issues for
+// the InitializeMutateInOptions function
+func extractHLVFromDoc(doc *Document) *base.DocHLV {
+	// init maps
+	extractedHLV := base.DocHLV{
+		MergeVersions:    make(map[string]uint64),
+		PreviousVersions: make(map[string]uint64),
+	}
+
+	// extract values
+	extractedHLV.CvCAS = doc.VersionVector.CurrentVersionCAS
+	extractedHLV.Version = doc.VersionVector.Version
+	extractedHLV.SourceID = doc.VersionVector.SourceID
+	extractedHLV.MergeVersions = doc.VersionVector.MergeVersions
+	extractedHLV.PreviousVersions = doc.VersionVector.PreviousVersions
+	return &extractedHLV
+}

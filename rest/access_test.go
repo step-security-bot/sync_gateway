@@ -811,8 +811,6 @@ func TestChannelAccessChanges(t *testing.T) {
 	err = a.Save(guest)
 	assert.NoError(t, err)
 
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
-
 	// Create users:
 	alice, err := a.NewUser("alice", "letmein", channels.BaseSetOf(t, "zero"))
 	require.NoError(t, err)
@@ -963,7 +961,7 @@ func TestChannelAccessChanges(t *testing.T) {
 	changed, err := collection.UpdateSyncFun(ctx, `function(doc) {access("alice", "beta");channel("beta");}`)
 	assert.NoError(t, err)
 	assert.True(t, changed)
-	changeCount, err := collectionWithUser.UpdateAllDocChannels(ctx, false, func(docsProcessed, docsChanged *int) {}, opts, base.NewSafeTerminator())
+	changeCount, err := collectionWithUser.UpdateAllDocChannels(ctx, false, func(docsProcessed, docsChanged *int) {}, base.NewSafeTerminator())
 	assert.NoError(t, err)
 	assert.Equal(t, 9, changeCount)
 

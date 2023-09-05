@@ -734,7 +734,7 @@ func TestMigrateBodyAttachments(t *testing.T) {
 	base.SetUpTestLogging(t, base.LevelDebug, base.KeyAll)
 
 	const docKey = "TestAttachmentMigrate"
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
+	opts := base.InitializeMutateInOptions(nil, nil, base.SyncXattrName)
 
 	setupFn := func(t *testing.T) (db *Database) {
 		db, ctx := setupTestDB(t)
@@ -1015,7 +1015,7 @@ func TestMigrateBodyAttachmentsMerge(t *testing.T) {
 	db, ctx := setupTestDB(t)
 	defer db.Close(ctx)
 	collection := GetSingleDatabaseCollectionWithUser(t, db)
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
+	opts := base.InitializeMutateInOptions(nil, nil, base.SyncXattrName)
 
 	// Put a document 2 attachments, to write attachment to the bucket
 	rev1input := `{"_attachments": {"hello.txt": {"data":"aGVsbG8gd29ybGQ="},"bye.txt": {"data":"Z29vZGJ5ZSBjcnVlbCB3b3JsZA=="}}}`

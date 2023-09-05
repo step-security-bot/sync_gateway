@@ -207,7 +207,7 @@ func TestImportWithCasFailureUpdate(t *testing.T) {
 	var runOnce bool
 	var ctx context.Context
 
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
+	opts := base.InitializeMutateInOptions(nil, nil, base.SyncXattrName)
 
 	type testcase struct {
 		callback func(key string)

@@ -104,8 +104,6 @@ func (r *ResyncManagerDCP) Run(ctx context.Context, options map[string]interface
 	defer persistClusterStatus()
 
 	defer atomic.CompareAndSwapUint32(&db.State, DBResyncing, DBOffline)
-	// Initialize mutate in options for _sync xattr
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
 
 	callback := func(event sgbucket.FeedEvent) bool {
 		docID := string(event.Key)
@@ -131,7 +129,7 @@ func (r *ResyncManagerDCP) Run(ctx context.Context, options map[string]interface
 		databaseCollection := db.CollectionByID[event.CollectionID]
 		_, unusedSequences, err := (&DatabaseCollectionWithUser{
 			DatabaseCollection: databaseCollection,
-		}).resyncDocument(ctx, docID, key, regenerateSequences, []uint64{}, opts)
+		}).resyncDocument(ctx, docID, key, regenerateSequences, []uint64{})
 
 		databaseCollection.releaseSequences(ctx, unusedSequences)
 

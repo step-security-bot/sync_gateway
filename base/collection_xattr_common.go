@@ -18,10 +18,12 @@ import (
 )
 
 const (
-	xattrMacroCas         = "cas"
-	xattrMacroValueCrc32c = "value_crc32c"
-	xattrMacroVersion     = "vrs"
-	xattrMacroSourceID    = "src"
+	xattrMacroCas             = "cas"
+	xattrMacroValueCrc32c     = "value_crc32c"
+	xattrMacroVersion         = "vrs"
+	xattrMacroSourceID        = "src"
+	xattrMacroPreviousVersion = "pv"
+	xattrMacroMergeVersion    = "mv"
 
 	versionVectorMacro = "._vv."
 )
@@ -229,7 +231,7 @@ func WriteUpdateWithXattr(store SubdocXattrStore, k string, xattrKey string, use
 		}
 
 		// Invoke callback to get updated value
-		updatedValue, updatedXattrValue, isDelete, callbackExpiry, err := callback(value, xattrValue, userXattrValue, cas)
+		updatedValue, updatedXattrValue, isDelete, callbackExpiry, opts, err := callback(value, xattrValue, userXattrValue, cas)
 
 		// If it's an ErrCasFailureShouldRetry, then retry by going back through the for loop
 		if err == ErrCasFailureShouldRetry {
@@ -442,18 +444,26 @@ func AsUserXattrStore(dataStore DataStore) (UserXattrStore, bool) {
 	}
 }
 
-func xattrCasPath(xattrKey string) string {
+func XattrCasPath(xattrKey string) string {
 	return xattrKey + "." + xattrMacroCas
 }
 
-func xattrCrc32cPath(xattrKey string) string {
+func XattrCrc32cPath(xattrKey string) string {
 	return xattrKey + "." + xattrMacroValueCrc32c
 }
 
-func xattrVersionPath(xattrKey string) string {
+func XattrVersionPath(xattrKey string) string {
 	return xattrKey + versionVectorMacro + xattrMacroVersion
 }
 
-func xattrSourceIDPath(xattrKey string) string {
+func XattrSourceIDPath(xattrKey string) string {
 	return xattrKey + versionVectorMacro + xattrMacroSourceID
+}
+
+func XattrPreviousVersionPath(xattrKey string) string {
+	return xattrKey + versionVectorMacro + xattrMacroPreviousVersion
+}
+
+func XattrMergeVersionPath(xattrKey string) string {
+	return xattrKey + versionVectorMacro + xattrMacroMergeVersion
 }

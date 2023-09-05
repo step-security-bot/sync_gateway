@@ -73,14 +73,12 @@ func (r *ResyncManager) Run(ctx context.Context, options map[string]interface{},
 	} else {
 		base.InfofCtx(ctx, base.KeyAll, "running resync against specified collections")
 	}
-	// Initialize mutate in options for _sync xattr
-	opts := base.InitializeMutateInOptions(nil, base.SyncXattrName)
 
 	for _, collectionID := range collectionIDs {
 		dbc := &DatabaseCollectionWithUser{
 			DatabaseCollection: database.CollectionByID[collectionID],
 		}
-		_, err := dbc.UpdateAllDocChannels(ctx, regenerateSequences, callback, opts, terminator)
+		_, err := dbc.UpdateAllDocChannels(ctx, regenerateSequences, callback, terminator)
 		if err != nil {
 			return err
 		}
