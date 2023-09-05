@@ -2120,7 +2120,6 @@ func createTombstonedDoc(t *testing.T, dataStore sgbucket.DataStore, key, xattrN
 	subdocStore, _ := dataStore.(SubdocXattrStore)
 	// Create tombstone revision which deletes doc body but preserves XATTR
 	// Initialize sg-bucket mutate in options
-	opts := InitializeMutateInOptions(nil, SyncXattrName)
 	_, mutateErr := subdocStore.SubdocDeleteBody(key, xattrName, 0, cas, opts)
 	/*
 		flags := gocb.SubdocDocFlagAccessDeleted

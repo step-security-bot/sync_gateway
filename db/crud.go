@@ -1003,14 +1003,6 @@ func (db *DatabaseCollectionWithUser) Put(ctx context.Context, docid string, bod
 
 		newRev := CreateRevIDWithBytes(generation, matchRev, canonicalBytesForRevID)
 
-		// update hlv here (construct the hlv)
-		// add cas and source
-		// move to Pv if needed
-		//doc, err = db.hlvLogicTemp(doc)
-		//if err != nil {
-		//	return nil, nil, false, nil, err
-		//}
-
 		if err := doc.History.addRevision(newDoc.ID, RevInfo{ID: newRev, Parent: matchRev, Deleted: deleted}); err != nil {
 			base.InfofCtx(ctx, base.KeyCRUD, "Failed to add revision ID: %s, for doc: %s, error: %v", newRev, base.UD(docid), err)
 			return nil, nil, false, nil, base.ErrRevTreeAddRevFailure
@@ -1033,7 +1025,7 @@ func (db *DatabaseCollectionWithUser) hlvLogicTemp(d *Document) (*Document, erro
 	}
 	newVVEntry.SourceID = bucketUUID
 	// add cas here
-	newVVEntry.VersionCAS = 0 //gocb.MutationMacroCAS
+	newVVEntry.VersionCAS = 0 // this will become gocb.MutationMacroCAS
 	err = d.VersionVector.AddVersion(newVVEntry)
 	if err != nil {
 		return nil, err
@@ -1922,7 +1914,6 @@ func (db *DatabaseCollectionWithUser) updateAndReturnDoc(ctx context.Context, do
 
 	if db.UseXattrs() || upgradeInProgress {
 		var casOut uint64
-		//opts = InitializeMutateInOptions(doc, opts, base.SyncXattrName)
 		// Update the document, storing metadata in extended attribute
 		casOut, err = db.dataStore.WriteUpdateWithXattr(key, base.SyncXattrName, db.userXattrKey(), expiry, opts, existingDoc, func(currentValue []byte, currentXattr []byte, currentUserXattr []byte, cas uint64) (raw []byte, rawXattr []byte, deleteDoc bool, syncFuncExpiry *uint32, opts *sgbucket.MutateInOptions, err error) {
 			// Be careful: this block can be invoked multiple times if there are races!

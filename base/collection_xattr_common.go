@@ -444,7 +444,7 @@ func AsUserXattrStore(dataStore DataStore) (UserXattrStore, bool) {
 	}
 }
 
-func XattrCasPath(xattrKey string) string {
+func xattrCasPath(xattrKey string) string {
 	return xattrKey + "." + xattrMacroCas
 }
 
@@ -452,18 +452,18 @@ func XattrCrc32cPath(xattrKey string) string {
 	return xattrKey + "." + xattrMacroValueCrc32c
 }
 
-func XattrVersionPath(xattrKey string) string {
+func xattrVersionPath(xattrKey string) string {
 	return xattrKey + versionVectorMacro + xattrMacroVersion
 }
 
-func XattrSourceIDPath(xattrKey string) string {
+func xattrSourceIDPath(xattrKey string) string {
 	return xattrKey + versionVectorMacro + xattrMacroSourceID
 }
 
-func XattrPreviousVersionPath(xattrKey string) string {
+func xattrPreviousVersionPath(xattrKey string) string {
 	return xattrKey + versionVectorMacro + xattrMacroPreviousVersion
 }
 
-func XattrMergeVersionPath(xattrKey string) string {
+func xattrMergeVersionPath(xattrKey string) string {
 	return xattrKey + versionVectorMacro + xattrMacroMergeVersion
 }

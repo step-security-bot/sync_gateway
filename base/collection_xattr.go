@@ -675,18 +675,18 @@ func InitializeMutateInOptions(doc *DocHLV, opts *sgbucket.MutateInOptions, xatt
 		doc.SourceID = ""
 	}
 	opts.Spec = []sgbucket.MutateInSpec{
-		sgbucket.UpsertSpec(XattrCasPath(xattrName), gocb.MutationMacroCAS),
-		sgbucket.UpsertSpec(XattrVersionPath(xattrName), gocb.MutationMacroCAS),
-		sgbucket.UpsertSpec(XattrSourceIDPath(xattrName), doc.SourceID),
+		sgbucket.UpsertSpec(xattrCasPath(xattrName), gocb.MutationMacroCAS),
+		sgbucket.UpsertSpec(xattrVersionPath(xattrName), gocb.MutationMacroCAS),
+		sgbucket.UpsertSpec(xattrSourceIDPath(xattrName), doc.SourceID),
 		sgbucket.UpsertSpec(XattrCrc32cPath(xattrName), gocb.MutationMacroValueCRC32c),
 	}
 
 	if len(doc.PreviousVersions) != 0 {
 		//convertMapToPersistedFormat()
-		opts.Spec = append(opts.Spec, sgbucket.UpsertSpec(XattrPreviousVersionPath(xattrName), doc.PreviousVersions))
+		opts.Spec = append(opts.Spec, sgbucket.UpsertSpec(xattrPreviousVersionPath(xattrName), doc.PreviousVersions))
 	}
 	if len(doc.MergeVersions) != 0 {
-		opts.Spec = append(opts.Spec, sgbucket.UpsertSpec(XattrMergeVersionPath(xattrName), doc.MergeVersions))
+		opts.Spec = append(opts.Spec, sgbucket.UpsertSpec(xattrMergeVersionPath(xattrName), doc.MergeVersions))
 	}
 	return opts
 }

@@ -63,6 +63,7 @@ type testPersistedHybridLogicalVector struct {
 	PreviousVersions  map[string]string `json:"pv,omitempty"`
 }
 
+// TestSyncData for testing purpose to unmarshal test sync data into
 type TestSyncData struct {
 	Seq           int                              `json:"seq"`
 	Rev           string                           `json:"rev"`
