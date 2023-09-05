@@ -678,7 +678,7 @@ func InitializeMutateInOptions(doc *DocHLV, opts *sgbucket.MutateInOptions, xatt
 		sgbucket.UpsertSpec(xattrCasPath(xattrName), gocb.MutationMacroCAS),
 		sgbucket.UpsertSpec(xattrVersionPath(xattrName), gocb.MutationMacroCAS),
 		sgbucket.UpsertSpec(xattrSourceIDPath(xattrName), doc.SourceID),
-		sgbucket.UpsertSpec(XattrCrc32cPath(xattrName), gocb.MutationMacroValueCRC32c),
+		sgbucket.UpsertSpec(xattrCrc32cPath(xattrName), gocb.MutationMacroValueCRC32c),
 	}
 
 	if len(doc.PreviousVersions) != 0 {

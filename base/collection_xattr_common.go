@@ -448,7 +448,7 @@ func xattrCasPath(xattrKey string) string {
 	return xattrKey + "." + xattrMacroCas
 }
 
-func XattrCrc32cPath(xattrKey string) string {
+func xattrCrc32cPath(xattrKey string) string {
 	return xattrKey + "." + xattrMacroValueCrc32c
 }
 
