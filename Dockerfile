@@ -7,7 +7,7 @@
 # licenses/APL2.txt.
 
 # Stage to build Sync Gateway binary
-FROM golang:1.11.5-stretch as builder
+FROM golang:1.11.5-stretch@sha256:37cb13a5ac71f03250c1e52714a523c9c029a545ad0b691ec3d898ab15a8a2dc as builder
 
 # Customize this with the commit hash or branch name you want to build
 ARG COMMIT=master
@@ -37,7 +37,7 @@ RUN ./build.sh -v
 
 
 # Stage to run the SG binary from the previous stage
-FROM ubuntu:latest as runner
+FROM ubuntu:latest@sha256:aabed3296a3d45cede1dc866a24476c4d7e093aa806263c27ddaadbdce3c1054 as runner
 
 ARG SG_FILENAME=sync_gateway_ce
 
